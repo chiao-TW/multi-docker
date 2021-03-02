@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker built -t chiaotw/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true chiaotw/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t chiaotw/multi-client ./client
+  - docker build -t chiaotw/multi-nginx ./ngnix
+  - docker build -t chiaotw/multi-server ./server
+  - docker build -t chiaotw/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push chiaotw/multi-client
+  - docker push chiaotw/multi-ngnix
+  - docker push chiaotw/multi-server
+  - docker push chiaotw/multi-worker
